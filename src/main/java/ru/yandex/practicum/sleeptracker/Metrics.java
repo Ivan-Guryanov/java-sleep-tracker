@@ -1,6 +1,5 @@
 package ru.yandex.practicum.sleeptracker;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
