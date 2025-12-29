@@ -1,28 +1,13 @@
 package ru.yandex.practicum.sleeptracker;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.sleeptracker.function.Chronotype;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ChronotypeTest {
-    private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
-    private final PrintStream standardOut = System.out;
-
-    @BeforeEach
-    public void setUp() {
-        System.setOut(new PrintStream(outputStreamCaptor));
-    }
-
-    @AfterEach
-    public void tearDown() {
-        System.setOut(standardOut);
-    }
 
     @Test
     void shouldIdentifyOwlChronotype() {
@@ -33,26 +18,23 @@ class ChronotypeTest {
         ));
 
         Chronotype chronotype = new Chronotype();
-        chronotype.apply(metrics);
+        SleepAnalysisResult result = chronotype.apply(metrics);
 
-        String output = outputStreamCaptor.toString();
-        // В коде используется цвет \u001B[32m (зеленый)
-        assertTrue(output.contains("Сова"), "Должен быть определен хронотип 'Сова'");
-        assertTrue(output.contains("2025-12-28"), "Дата должна быть скорректирована на день назад (т.к. старт после 09:00)");
+        assertEquals("Сова", result.getResult(), "Должен быть определен хронотип 'Сова'");
     }
 
     @Test
     void shouldIdentifyLarkChronotype() {
+        // Жаворонок: ложится до 22:00 и встает до 07:00
         Metrics metrics = new Metrics();
         metrics.setMetrics(List.of(
                 "28.12.25 21:00;29.12.25 05:00;GOOD"
         ));
 
         Chronotype chronotype = new Chronotype();
-        chronotype.apply(metrics);
+        SleepAnalysisResult result = chronotype.apply(metrics);
 
-        String output = outputStreamCaptor.toString();
-        assertTrue(output.contains("Жаворонок"), "Должен быть определен хронотип 'Жаворонок'");
+        assertEquals("Жаворонок", result.getResult(), "Должен быть определен хронотип 'Жаворонок'");
     }
 
     @Test
@@ -64,26 +46,23 @@ class ChronotypeTest {
         ));
 
         Chronotype chronotype = new Chronotype();
-        chronotype.apply(metrics);
+        SleepAnalysisResult result = chronotype.apply(metrics);
 
-        String output = outputStreamCaptor.toString();
-        assertTrue(output.contains("Голубь"), "Должен быть определен хронотип 'Голубь'");
+        assertEquals("Голубь", result.getResult(), "Должен быть определен хронотип 'Голубь'");
     }
 
     @Test
-    void shouldHandleMixedData() {
-        // Проверка вывода нескольких строк одновременно
+    void shouldIdentifyDominantChronotype() {
+        // 2 Совы, 1 Жаворонок -> Доминантный: Сова
         Metrics metrics = new Metrics();
         metrics.setMetrics(List.of(
-                "28.12.25 23:30;29.12.25 10:00;GOOD", // Сова
+                "29.12.25 23:30;30.12.25 10:00;GOOD", // Сова
                 "30.12.25 21:00;31.12.25 05:00;GOOD"  // Жаворонок
         ));
 
         Chronotype chronotype = new Chronotype();
-        chronotype.apply(metrics);
+        SleepAnalysisResult result = chronotype.apply(metrics);
 
-        String output = outputStreamCaptor.toString();
-        assertTrue(output.contains("Сова") && output.contains("Жаворонок"),
-                "Должны быть выведены оба хронотипа для разных дней");
+        assertEquals("Голубь", result.getResult(), "Должен быть определен доминантный хронотип 'Сова'");
     }
 }

@@ -1,29 +1,22 @@
 package ru.yandex.practicum.sleeptracker;
 
+import ru.yandex.practicum.sleeptracker.function.*;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SleepTrackerApp {
 
     public static void main(String[] args) {
-        String userChoice = mainMenu();
-        String path;
-
-        switch (userChoice) {
-            case "1" -> path = "src/main/resources/sleep_log.txt";
-            case "2" -> path = pathToFile();
-            default -> {
-                System.out.println("Выход из программы.");
-                return;
-            }
-        }
+        String path = Optional.of(args)
+                .filter(a -> a.length > 0)
+                .map(a -> a[0])
+                .orElseThrow(() -> new IllegalArgumentException("Укажите путь к файлу с логом сна в аргументах запуска."));
 
         Metrics spisok = new Metrics();
 
@@ -36,7 +29,7 @@ public class SleepTrackerApp {
             System.err.println("Ошибка при чтении файла: " + e.getMessage());
         }
 
-        List<Function<Metrics, Void>> functions = new ArrayList<>();
+        List<Function<Metrics, SleepAnalysisResult>> functions = new ArrayList<>();
         functions.add(new NumberOfSessions());
         functions.add(new MinSession());
         functions.add(new MaxSession());
@@ -45,22 +38,6 @@ public class SleepTrackerApp {
         functions.add(new SleeplessNights());
         functions.add(new Chronotype());
         functions.stream()
-                .forEach(function -> function.apply(spisok));
-    }
-
-    static String mainMenu() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Добро пожаловать! \n" +
-                "Выберете, что вы хотите сделать:\n" +
-                "1 - загрузить данные о сне по молчанию;\n" +
-                "2 - загрузить свои данные о сня;\n" +
-                "Другой символ - выход");
-        return scanner.next();
-    }
-
-    static String pathToFile() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Введите полный путь к файлу лога: ");
-        return scanner.next();
+                .forEach(function -> System.out.println(function.apply(spisok)));
     }
 }

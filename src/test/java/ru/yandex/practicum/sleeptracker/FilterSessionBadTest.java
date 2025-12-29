@@ -1,28 +1,13 @@
 package ru.yandex.practicum.sleeptracker;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.sleeptracker.function.FilterSessionBad;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FilterSessionBadTest {
-    private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
-    private final PrintStream standardOut = System.out;
-
-    @BeforeEach
-    public void setUp() {
-        System.setOut(new PrintStream(outputStreamCaptor));
-    }
-
-    @AfterEach
-    public void tearDown() {
-        System.setOut(standardOut);
-    }
 
     @Test
     void shouldCountOnlyBadQualitySessions() {
@@ -34,34 +19,32 @@ class FilterSessionBadTest {
         ));
 
         FilterSessionBad filterSessionBad = new FilterSessionBad();
-        filterSessionBad.apply(metrics);
+        SleepAnalysisResult result = filterSessionBad.apply(metrics);
 
-        String output = outputStreamCaptor.toString().trim();
-        assertTrue(output.contains("Вы плохо спали - 2 раз(а)."));
+        assertEquals(2, result.getResult(), "Должно быть 2 плохих сессии");
     }
 
     @Test
-    void shouldPrintZeroWhenNoBadSessionsFound() {
+    void shouldReturnZeroWhenNoBadSessionsFound() {
         Metrics metrics = new Metrics();
         metrics.setMetrics(List.of(
                 "28.12.25 22:00;29.12.25 06:00;GOOD"
         ));
 
         FilterSessionBad filterSessionBad = new FilterSessionBad();
-        filterSessionBad.apply(metrics);
+        SleepAnalysisResult result = filterSessionBad.apply(metrics);
 
-        String output = outputStreamCaptor.toString().trim();
-        assertTrue(output.contains("Вы плохо спали - 0 раз(а)."));
+        assertEquals(0, result.getResult(), "Должно быть 0 плохих сессий");
     }
 
     @Test
     void shouldHandleEmptyMetrics() {
         Metrics metrics = new Metrics();
+        metrics.setMetrics(List.of());
 
         FilterSessionBad filterSessionBad = new FilterSessionBad();
-        filterSessionBad.apply(metrics);
+        SleepAnalysisResult result = filterSessionBad.apply(metrics);
 
-        String output = outputStreamCaptor.toString().trim();
-        assertTrue(output.contains("Вы плохо спали - 0 раз(а)."));
+        assertEquals(0, result.getResult(), "Для пустого списка результат должен быть 0");
     }
 }
